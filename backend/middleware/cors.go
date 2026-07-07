@@ -1,3 +1,6 @@
+// Herlin AI Assistant - Backend Service
+// Copyright 2026 Herlin AI. All rights reserved.
+
 package middleware
 
 import (
