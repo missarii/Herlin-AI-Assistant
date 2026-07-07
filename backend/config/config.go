@@ -16,6 +16,7 @@ type Config struct {
 	AI          AIConfig
 	Storage     StorageConfig
 	Qdrant      QdrantConfig
+	Email       EmailConfig
 }
 
 type ServerConfig struct {
@@ -78,6 +79,11 @@ type QdrantConfig struct {
 	Port string
 }
 
+type EmailConfig struct {
+	Username string
+	Password string
+}
+
 func LoadConfig() (*Config, error) {
 	// Load .env file if exists
 	godotenv.Load()
@@ -130,6 +136,10 @@ func LoadConfig() (*Config, error) {
 		Qdrant: QdrantConfig{
 			Host: getEnv("QDRANT_HOST", "localhost"),
 			Port: getEnv("QDRANT_PORT", "6333"),
+		},
+		Email: EmailConfig{
+			Username: getEnv("EMAIL_USERNAME", ""),
+			Password: getEnv("EMAIL_PASSWORD", ""),
 		},
 	}
 
