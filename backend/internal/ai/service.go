@@ -45,6 +45,27 @@ func (s *Service) GenerateResponse(messages []Message, model string) (*Response,
 	}
 }
 
+func (s *Service) GenerateResponseStream(messages []Message, model string, chunkChan chan<- StreamChunk) (*Response, error) {
+	provider := s.getProvider(model)
+
+	switch provider {
+	case "openai":
+		return s.generateOpenAIStreamResponse(messages, model, chunkChan)
+	case "gemini":
+		return s.generateGeminiStreamResponse(messages, model, chunkChan)
+	case "claude":
+		return s.generateClaudeStreamResponse(messages, model, chunkChan)
+	default:
+		return s.generateOpenAIStreamResponse(messages, model, chunkChan)
+	}
+}
+
+type StreamChunk struct {
+	Content string
+	Done    bool
+	Token   int
+}
+
 func (s *Service) getProvider(model string) string {
 	if strings.Contains(model, "gpt") {
 		return "openai"
@@ -328,4 +349,121 @@ func (s *Service) fallbackResponse(model string) (*Response, error) {
 		Tokens:  0,
 		Model:   model,
 	}, nil
+}
+
+// Streaming implementations
+func (s *Service) generateOpenAIStreamResponse(messages []Message, model string, chunkChan chan<- StreamChunk) (*Response, error) {
+	if s.cfg.AI.OpenAI.APIKey == "" {
+		chunkChan <- StreamChunk{Content: "No API key configured", Done: true}
+		return s.fallbackResponse(model)
+	}
+
+	requestModel := model
+	if requestModel == "" {
+		requestModel = s.cfg.AI.OpenAI.Model
+	}
+
+	req := OpenAIRequest{
+		Model:    requestModel,
+		Messages: messages,
+	}
+
+	jsonData, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	httpReq, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Authorization", "Bearer "+s.cfg.AI.OpenAI.APIKey)
+	httpReq.Header.Set("Accept", "text/event-stream")
+
+	client := &http.Client{}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("OpenAI API error: %s", string(body))
+	}
+
+	reader := bufio.NewReader(resp.Body)
+	var fullContent string
+	var totalTokens int
+
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("failed to read stream: %w", err)
+		}
+
+		if len(line) < 6 || line[:6] != "data: " {
+			continue
+		}
+
+		data := line[6:]
+		if data == "[DONE]" {
+			break
+		}
+
+		var streamResp struct {
+			Choices []struct {
+				Delta struct {
+					Content string `json:"content"`
+				} `json:"delta"`
+			} `json:"choices"`
+		}
+
+		if err := json.Unmarshal([]byte(data), &streamResp); err != nil {
+			continue
+		}
+
+		if len(streamResp.Choices) > 0 && streamResp.Choices[0].Delta.Content != "" {
+			content := streamResp.Choices[0].Delta.Content
+			fullContent += content
+			chunkChan <- StreamChunk{Content: content, Done: false}
+		}
+	}
+
+	chunkChan <- StreamChunk{Done: true}
+
+	return &Response{
+		Content: fullContent,
+		Tokens:  totalTokens,
+		Model:   requestModel,
+	}, nil
+}
+
+func (s *Service) generateGeminiStreamResponse(messages []Message, model string, chunkChan chan<- StreamChunk) (*Response, error) {
+	// Gemini streaming implementation similar to OpenAI
+	// For now, use non-streaming fallback
+	response, err := s.generateGeminiResponse(messages, model)
+	if err != nil {
+		return nil, err
+	}
+	
+	chunkChan <- StreamChunk{Content: response.Content, Done: true}
+	return response, nil
+}
+
+func (s *Service) generateClaudeStreamResponse(messages []Message, model string, chunkChan chan<- StreamChunk) (*Response, error) {
+	// Claude streaming implementation similar to OpenAI
+	// For now, use non-streaming fallback
+	response, err := s.generateClaudeResponse(messages, model)
+	if err != nil {
+		return nil, err
+	}
+	
+	chunkChan <- StreamChunk{Content: response.Content, Done: true}
+	return response, nil
 }
