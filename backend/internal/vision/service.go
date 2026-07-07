@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/herlin-ai/herlin-assistant/config"
 	"github.com/herlin-ai/herlin-assistant/internal/ai"
@@ -62,14 +61,14 @@ func (s *Service) AnalyzeImage(imageData []byte, imageFormat string, query strin
 	}
 
 	content := []interface{}{
-		map[string]string{"type": "text", "text": "Analyze this image. Describe what you see, identify objects, and extract any text if present."},
-		map[string]string{"type": "image_url", "image_url": map[string]string{"url": dataURL}},
+		map[string]interface{}{"type": "text", "text": "Analyze this image. Describe what you see, identify objects, and extract any text if present."},
+		map[string]interface{}{"type": "image_url", "image_url": map[string]interface{}{"url": dataURL}},
 	}
 
 	if query != "" {
 		content = []interface{}{
-			map[string]string{"type": "text", "text": query},
-			map[string]string{"type": "image_url", "image_url": map[string]string{"url": dataURL}},
+			map[string]interface{}{"type": "text", "text": query},
+			map[string]interface{}{"type": "image_url", "image_url": map[string]interface{}{"url": dataURL}},
 		}
 	}
 
@@ -161,10 +160,10 @@ func (s *Service) AnalyzeScreenshot(imageData []byte, imageFormat string) (*Scre
 		}{
 			{
 				Role: "user",
-				Content: []interface{}{
-					map[string]string{"type": "text", "text": "This is a screenshot, possibly containing code or an error message. Analyze it and provide: 1) The error explanation, 2) Suggested fix, 3) Any relevant code snippet. Return as JSON with fields: error_explanation, suggested_fix, code_snippet"},
-					map[string]string{"type": "image_url", "image_url": map[string]string{"url": dataURL}},
-				},
+			Content: []interface{}{
+				map[string]interface{}{"type": "text", "text": "This is a screenshot, possibly containing code or an error message. Analyze it and provide: 1) The error explanation, 2) Suggested fix, 3) Any relevant code snippet. Return as JSON with fields: error_explanation, suggested_fix, code_snippet"},
+				map[string]interface{}{"type": "image_url", "image_url": map[string]interface{}{"url": dataURL}},
+			},
 			},
 		},
 		MaxTokens: 1500,
@@ -252,10 +251,10 @@ func (s *Service) AnalyzeDiagram(imageData []byte, imageFormat string) (*Diagram
 		}{
 			{
 				Role: "user",
-				Content: []interface{}{
-					map[string]string{"type": "text", "text": "Analyze this diagram/chart. Identify the type, components, flow, and provide a summary. Return as JSON with fields: type, components (array), flow, summary"},
-					map[string]string{"type": "image_url", "image_url": map[string]string{"url": dataURL}},
-				},
+			Content: []interface{}{
+				map[string]interface{}{"type": "text", "text": "Analyze this diagram/chart. Identify the type, components, flow, and provide a summary. Return as JSON with fields: type, components (array), flow, summary"},
+				map[string]interface{}{"type": "image_url", "image_url": map[string]interface{}{"url": dataURL}},
+			},
 			},
 		},
 		MaxTokens: 1000,

@@ -7,7 +7,6 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
-	"time"
 
 	"github.com/herlin-ai/herlin-assistant/config"
 )
@@ -20,12 +19,6 @@ type TranscriptionResult struct {
 	Text     string  `json:"text"`
 	Language string  `json:"language"`
 	Duration float64 `json:"duration"`
-}
-
-type SynthesisRequest struct {
-	Text     string  `json:"text"`
-	Voice    string  `json:"voice"`
-	Language string  `json:"language"`
 }
 
 type SynthesisResult struct {
@@ -70,7 +63,7 @@ func (s *Service) SpeechToText(audioData []byte, audioFormat string) (*Transcrip
 		return nil, fmt.Errorf("failed to close writer: %w", err)
 	}
 
-	req.Body = body
+	req.Body = io.NopCloser(body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	req.Header.Set("Authorization", "Bearer "+s.cfg.AI.OpenAI.APIKey)
 
@@ -150,8 +143,8 @@ func (s *Service) TextToSpeech(text string, voice string, language string) (*Syn
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("OpenAI API error: %s", string(body))
+		errBody, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("OpenAI API error: %s", string(errBody))
 	}
 
 	audioData, err := io.ReadAll(resp.Body)

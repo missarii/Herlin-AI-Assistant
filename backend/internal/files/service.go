@@ -1,12 +1,10 @@
 package files
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
-	"net/http"
 	"path/filepath"
 	"strings"
 	"time"
@@ -254,7 +252,6 @@ func (s *Service) QueryDocument(documentID uint, userID uint, query string) (str
 func (s *Service) storeFile(userID uint, filename string, content []byte) (string, error) {
 	// For now, store locally. In production, use S3/MinIO
 	extension := filepath.Ext(filename)
-	baseName := strings.TrimSuffix(filename, extension)
 	newFilename := fmt.Sprintf("%d_%d%s", userID, time.Now().Unix(), extension)
 	filePath := filepath.Join("uploads", newFilename)
 

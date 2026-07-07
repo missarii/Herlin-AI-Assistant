@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/herlin-ai/herlin-assistant/config"
 )
 
 func AuthMiddleware(secret string) gin.HandlerFunc {

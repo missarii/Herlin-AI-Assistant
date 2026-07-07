@@ -19,12 +19,6 @@ func NewHandler(cfg *config.Config) *Handler {
 	}
 }
 
-type CodeRequest struct {
-	Code     string `json:"code"`
-	Language string `json:"language"`
-	Query    string `json:"query"`
-}
-
 type ConvertCodeRequest struct {
 	Code           string `json:"code" binding:"required"`
 	SourceLanguage string `json:"source_language" binding:"required"`

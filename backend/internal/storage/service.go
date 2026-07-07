@@ -191,8 +191,7 @@ func (s *Service) ListFiles(prefix string, recursive bool) ([]FileInfo, error) {
 }
 
 func (s *Service) GeneratePresignedURL(key string, expiration time.Duration) (string, error) {
-	reqParams := make(url.Values)
-	presignedURL, err := s.client.PresignedGetObject(s.ctx, s.cfg.Storage.Bucket, key, expiration, reqParams)
+	presignedURL, err := s.client.PresignedGetObject(s.ctx, s.cfg.Storage.Bucket, key, expiration, url.Values{})
 	if err != nil {
 		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
 	}
@@ -200,7 +199,6 @@ func (s *Service) GeneratePresignedURL(key string, expiration time.Duration) (st
 }
 
 func (s *Service) GeneratePresignedUploadURL(key string, expiration time.Duration) (string, error) {
-	reqParams := make(url.Values)
 	presignedURL, err := s.client.PresignedPutObject(s.ctx, s.cfg.Storage.Bucket, key, expiration)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate presigned upload URL: %w", err)

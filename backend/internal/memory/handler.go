@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/herlin-ai/herlin-assistant/config"
-	"github.com/herlin-ai/herlin-assistant/internal/models"
 	"gorm.io/gorm"
 )
 

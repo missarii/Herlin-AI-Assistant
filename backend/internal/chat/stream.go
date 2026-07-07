@@ -1,7 +1,6 @@
 package chat
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,10 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/herlin-ai/herlin-assistant/internal/ai"
 	"github.com/herlin-ai/herlin-assistant/internal/models"
-	"gorm.io/gorm"
 )
 
-type StreamChunk struct {
+type streamChunk struct {
 	Content string `json:"content"`
 	Done    bool   `json:"done"`
 	Token   int    `json:"token,omitempty"`
@@ -82,15 +80,15 @@ func (h *Handler) SendMessageStream(c *gin.Context) {
 	c.Header("Transfer-Encoding", "chunked")
 
 	// Create channel for streaming
-	streamChan := make(chan StreamChunk)
+	aiStreamChan := make(chan ai.StreamChunk)
 	errChan := make(chan error)
 
 	// Start streaming in goroutine
 	go func() {
-		defer close(streamChan)
+		defer close(aiStreamChan)
 		defer close(errChan)
 
-		response, err := h.ai.GenerateResponseStream(aiMessages, conversation.Model, streamChan)
+		response, err := h.ai.GenerateResponseStream(aiMessages, conversation.Model, aiStreamChan)
 		if err != nil {
 			errChan <- err
 			return
@@ -119,13 +117,17 @@ func (h *Handler) SendMessageStream(c *gin.Context) {
 	// Stream to client
 	c.Stream(func(w io.Writer) bool {
 		select {
-		case chunk := <-streamChan:
-			data, _ := json.Marshal(chunk)
+		case chunk := <-aiStreamChan:
+			sc := streamChunk{
+				Content: chunk.Content,
+				Done:    chunk.Done,
+			}
+			data, _ := json.Marshal(sc)
 			fmt.Fprintf(w, "data: %s\n\n", data)
 			return !chunk.Done
 		case err := <-errChan:
 			if err != nil {
-				errorChunk := StreamChunk{
+				errorChunk := streamChunk{
 					Content: fmt.Sprintf("Error: %s", err.Error()),
 					Done:    true,
 				}

@@ -1,7 +1,6 @@
 package agents
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
