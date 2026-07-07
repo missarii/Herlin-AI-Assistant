@@ -2,8 +2,6 @@
 
 ### AI-Powered Personal Assistant Backend Platform (Built with Golang)
 
-![Herlin AI Assistant](https://images.openai.com/static-rsc-4/uWwiR5120GMK_LNJd8MdGVYTk0dKTPxPNdDeahsN2rH50pJQ_p6TN2nSOXPwje5_X_jDBNkE-SHKLj5NLyjYsgFRGtV5P5rDXfLZDlbJgCmCHZ2jUsmD9rJGczyswMLaOXILI5x7HuSxcwzde9ft-kuRm1ODiBy4w6YTW_izN8D9d9WxM6IXay6AJZ_ydQ5J?purpose=fullsize)
-
 ## Overview
 
 Herlin AI Assistant is a modern AI-powered personal assistant platform that helps users communicate with an intelligent AI system, manage knowledge, analyze files, automate tasks, and receive personalized assistance.
@@ -117,53 +115,216 @@ Herlin-AI-Assistant/
 └── .env.example             # Environment variables
 ```
 
-## API Endpoints
+## API Endpoints with Functions and Usage
 
 ### Authentication
-- `POST /api/v1/public/register` - Register new user
-- `POST /api/v1/public/login` - User login
-- `POST /api/v1/public/refresh` - Refresh JWT token
+- `POST /api/v1/public/register` - **Register new user account**
+  ```json
+  // Request body: { "name": "string", "email": "string", "password": "string" }
+  ```
+- `POST /api/v1/public/login` - **Authenticate user and get JWT token**
+  ```json
+  // Request body: { "email": "string", "password": "string" }
+  // Returns: { "token", "refresh_token", "expires_at", "user" }
+  ```
+- `POST /api/v1/public/refresh` - **Get new JWT token using refresh token**
+  ```json
+  // Request body: { "refresh_token": "string" }
+  ```
 
 ### User Management
-- `GET /api/v1/users/me` - Get current user
-- `PUT /api/v1/users/me` - Update user profile
+- `GET /api/v1/users/me` - **Get current authenticated user profile**
+  ```json
+  // Headers: Authorization: Bearer <token>
+  // Returns: { "id", "name", "email", "avatar", "created_at" }
+  ```
+- `PUT /api/v1/users/me` - **Update user profile information**
+  ```json
+  // Request body: { "name": "string", "email": "string" }
+  ```
+
+### Chat System
+- `POST /api/v1/chat` - **Send message to AI and get response**
+  ```json
+  // Headers: Authorization: Bearer <token>
+  // Request body: { "message": "string", "conversation_id": "uint?", "model": "string?" }
+  // Returns: { "message_id", "conversation_id", "role", "content", "tokens", "created_at" }
+  ```
+- `POST /api/v1/chat/stream` - **Stream AI response in real-time (SSE)**
+  ```json
+  // Same as above but returns Server-Sent Events
+  // Response: data: { "content": "string", "done": "bool" }
+  ```
 
 ### Conversations
-- `GET /api/v1/conversations` - Get all conversations
-- `POST /api/v1/conversations` - Create conversation
-- `GET /api/v1/conversations/:id` - Get conversation
-- `PUT /api/v1/conversations/:id` - Update conversation
-- `DELETE /api/v1/conversations/:id` - Delete conversation
+- `GET /api/v1/conversations` - **Get all user conversations**
+  ```json
+  // Returns array of: { "id", "title", "model", "is_archived", "created_at", "updated_at" }
+  ```
+- `POST /api/v1/conversations` - **Create new conversation**
+  ```json
+  // Request body: { "title": "string?", "model": "string?" }
+  ```
+- `GET /api/v1/conversations/:id` - **Get specific conversation details**
+- `PUT /api/v1/conversations/:id` - **Update conversation**
+  ```json
+  // Request body: { "title": "string?", "model": "string?" }
+  ```
+- `DELETE /api/v1/conversations/:id` - **Delete conversation**
+- `GET /api/v1/conversations/:id/messages` - **Get all messages in conversation**
 
-### Chat
-- `POST /api/v1/chat` - Send message
-- `GET /api/v1/conversations/:id/messages` - Get messages
-
-### Memory
-- `POST /api/v1/memory` - Store memory
-- `POST /api/v1/memory/search` - Search memories
-- `GET /api/v1/memory` - Get all memories
-
-### Agents
-- `POST /api/v1/agents` - Create agent
-- `GET /api/v1/agents` - Get all agents
-- `POST /api/v1/agents/:id/execute` - Execute agent task
-
-### Code
-- `POST /api/v1/code/generate` - Generate code
-- `POST /api/v1/code/debug` - Debug code
-- `POST /api/v1/code/review` - Review code
-- `POST /api/v1/code/optimize` - Optimize code
-- `POST /api/v1/code/document` - Generate documentation
+### Code Assistant
+- `POST /api/v1/code/generate` - **Generate code in specified language**
+  ```json
+  // Request body: { "code": "string?", "language": "string", "query": "string" }
+  // Returns: { "generated_code", "explanation" }
+  ```
+- `POST /api/v1/code/debug` - **Debug code and identify errors**
+  ```json
+  // Request body: { "code": "string", "language": "string", "query": "error description" }
+  // Returns: { "errors": [], "suggestions": [], "generated_code": "fixed code" }
+  ```
+- `POST /api/v1/code/review` - **Review code quality**
+  ```json
+  // Request body: { "code": "string", "language": "string" }
+  // Returns: { "score": 1-10, "issues": [], "suggestions": [], "best_practices": [], "security": [] }
+  ```
+- `POST /api/v1/code/optimize` - **Optimize code performance**
+  ```json
+  // Request body: { "code": "string", "language": "string" }
+  // Returns: { "generated_code", "optimizations": [], "explanation": "string" }
+  ```
+- `POST /api/v1/code/document` - **Generate documentation for code**
+  ```json
+  // Request body: { "code": "string", "language": "string" }
+  // Returns: { "documentation": "string" }
+  ```
+- `POST /api/v1/code/explain` - **Explain code in simple terms**
+  ```json
+  // Request body: { "code": "string", "language": "string" }
+  // Returns: { "explanation": "educational explanation" }
+  ```
+- `POST /api/v1/code/convert` - **Convert code between languages**
+  ```json
+  // Request body: { "code": "string", "source_language": "string", "query": "convert to X" }
+  // Returns: { "generated_code": "converted code" }
+  ```
+- `POST /api/v1/code/tests` - **Generate unit tests**
+  ```json
+  // Request body: { "code": "string", "language": "string" }
+  // Returns: { "generated_code": "test code" }
+  ```
+- `GET /api/v1/code/languages` - **Get supported programming languages**
 
 ### Documents
-- `POST /api/v1/documents` - Upload document
-- `GET /api/v1/documents` - Get all documents
-- `POST /api/v1/documents/:id/query` - Query document
+- `POST /api/v1/documents` - **Upload and process document**
+  ```json
+  // Form data: file (multipart)
+  // Returns: { "id", "title", "file_name", "file_size", "file_type", "status": "processing|completed", "created_at" }
+  ```
+- `GET /api/v1/documents` - **Get all user documents**
+- `POST /api/v1/documents/:id/analyze` - **Analyze document content**
+  ```json
+  // Returns: { "summary", "key_points": [], "topics": [], "language", "word_count", "page_count" }
+  ```
+- `POST /api/v1/documents/:id/query` - **Ask questions about document**
+  ```json
+  // Request body: { "query": "question about document" }
+  // Returns: { "answer": "string" }
+  ```
+- `DELETE /api/v1/documents/:id` - **Delete document**
+
+### Memory System
+- `POST /api/v1/memory` - **Store memory with vector embedding**
+  ```json
+  // Request body: { "content": "string", "importance": 0.0-1.0 }
+  // Creates embedding and stores in both PostgreSQL and Qdrant
+  ```
+- `POST /api/v1/memory/search` - **Semantic search memories**
+  ```json
+  // Request body: { "query": "search text", "limit": "int?" }
+  // Returns: { "results": [{ "content", "importance", "similarity" }] }
+  ```
+- `GET /api/v1/memory` - **Get all memories**
+  ```json
+  // Query param: limit (default: 20)
+  // Returns memories sorted by importance and access count
+  ```
+- `DELETE /api/v1/memory/:id` - **Delete memory**
+- `PUT /api/v1/memory/:id` - **Update memory importance**
+  ```json
+  // Request body: { "importance": 0.0-1.0 }
+  ```
+
+### Vision/Image Analysis
+- `POST /api/v1/vision/analyze` - **Analyze images**
+  ```json
+  // Request body: { "image_data": "base64", "image_format": "png|jpg|jpeg|gif", "query": "optional question" }
+  // Returns: { "description", "objects": [], "text": "extracted text", "confidence": 0.0-1.0 }
+  ```
+- `POST /api/v1/vision/screenshot` - **Analyze screenshots/errors**
+  ```json
+  // Request body: { "image_data": "base64", "image_format": "png|jpg" }
+  // Returns: { "error_explanation", "suggested_fix", "code_snippet" }
+  ```
+- `POST /api/v1/vision/diagram` - **Analyze diagrams and charts**
+  ```json
+  // Request body: { "image_data": "base64", "image_format": "png|jpg" }
+  // Returns: { "type", "components": [], "flow", "summary" }
+  ```
+
+### Voice Assistant
+- `POST /api/v1/voice/transcribe` - **Convert speech to text**
+  ```json
+  // Request body: { "audio_data": "base64", "audio_format": "mp3|wav|ogg" }
+  // Returns: { "text", "language", "duration" }
+  ```
+- `POST /api/v1/voice/synthesize` - **Convert text to speech**
+  ```json
+  // Request body: { "text": "string", "voice": "alloy|echo|fable|onyx|nova|shimmer?", "language": "string?" }
+  // Returns: audio/mp3 binary data
+  ```
+- `POST /api/v1/voice/command` - **Process voice commands**
+  ```json
+  // Request body: { "audio_data": "base64", "audio_format": "mp3|wav|ogg" }
+  // Returns: { "command": "greeting|help|query|...", "transcription", "text" }
+  ```
+
+### AI Agents
+- `POST /api/v1/agents` - **Create autonomous AI agent**
+  ```json
+  // Request body: { "name": "string", "description": "string", "capabilities": ["web_search", "file_operations", ...], "settings": {} }
+  // Returns: { "id", "name", "description", "is_active", "created_at" }
+  ```
+- `GET /api/v1/agents` - **Get all user agents**
+- `GET /api/v1/agents/:id` - **Get specific agent**
+- `PUT /api/v1/agents/:id` - **Update agent configuration**
+- `DELETE /api/v1/agents/:id` - **Delete agent**
+- `POST /api/v1/agents/:id/execute` - **Execute agent task**
+  ```json
+  // Request body: { "task": "what to do" }
+  // Returns: { "id": "task_id", "type", "input", "status": "processing" }
+  ```
+- `GET /api/v1/agents/tasks/:taskId` - **Get task status**
 
 ### Notifications
-- `GET /api/v1/notifications` - Get notifications
-- `POST /api/v1/reminders` - Create reminder
+- `GET /api/v1/notifications` - **Get all notifications**
+  ```json
+  // Query param: limit (default: 20)
+  // Returns: array of notifications
+  ```
+- `GET /api/v1/notifications/unread` - **Get unread notifications only**
+- `PATCH /api/v1/notifications/:id/read` - **Mark notification as read**
+- `PATCH /api/v1/notifications/read-all` - **Mark all notifications as read**
+- `DELETE /api/v1/notifications/:id` - **Delete notification**
+- `POST /api/v1/reminders` - **Create scheduled reminder**
+  ```json
+  // Request body: { "title": "string", "message": "string", "scheduled_at": "RFC3339 datetime" }
+  ```
+- `POST /api/v1/notifications/push` - **Send push notification**
+  ```json
+  // Request body: { "title": "string", "message": "string" }
+  ```
 
 ## Quick Start
 
